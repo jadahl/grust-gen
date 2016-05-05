@@ -476,6 +476,7 @@ def _unwrap_call_signature_ctype(type_container):
     if ctype is None:
         raise MappingError('parameter {}: C type attribute is missing'.format(type_container.argname))
     if (isinstance(type_container, ast.Parameter)
+        and not isinstance(type_container.type, ast.Array)
         and type_container.direction in (ast.PARAM_DIRECTION_OUT,
                                          ast.PARAM_DIRECTION_INOUT)
         and not type_container.caller_allocates):
