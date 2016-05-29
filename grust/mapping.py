@@ -873,6 +873,33 @@ class RawMapper(object):
                 .format(field.name, typenode))
         return self._map_type(field.type, nullable=True)
 
+    def _struct_field_type_is_valid(self, field_type):
+        if field_type is None:
+            return False
+        if isinstance(field_type, ast.Union):
+            return False
+        if isinstance(field_type, ast.Array):
+            return self._struct_field_type_is_valid(field_type.element_type)
+        if isinstance(field_type, ast.Record):
+            return self.struct_is_valid(field_type)
+        if isinstance(field_type, ast.Type) and field_type.target_giname:
+            if not self.node_is_mappable(field_type):
+                return False
+            if field_type.ctype is None or not field_type.ctype.endswith('*'):
+                crate,name = self._lookup_giname(field_type.target_giname)
+                return self._struct_field_type_is_valid(crate.namespace.names[name])
+        return True
+
+    def struct_is_valid(self, node):
+        if isinstance(node, ast.Union):
+            return False
+        for field in node.fields:
+            if field.bits is not None:
+                return False
+            if not self._struct_field_type_is_valid(field.type):
+                return False
+        return True
+
     def node_is_mappable(self, node):
         if isinstance(node, ast.Type) and node == ast.TYPE_VALIST:
             return False

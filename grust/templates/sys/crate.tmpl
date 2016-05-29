@@ -57,6 +57,7 @@ def indenter(amount):
         ast.Constant: constant,
         ast.Record: struct,
         ast.Class: struct,
+        ast.Union: struct,
         ast.Interface: interface,
         ast.Enum: enum,
         ast.Bitfield: flags
@@ -206,11 +207,15 @@ pub struct ${node.ctype}(gpointer);
 pub enum ${node.ctype} { }
 %   else:
 #[repr(C)]
+%       if not mapper.struct_is_valid(node):
+pub struct ${node.ctype};
+%       else:
 pub struct ${node.ctype} {
-%       for field in node.fields:
+%           for field in node.fields:
     ${'' if field.private else 'pub '}${sanitize_ident(field.name)}: ${mapper.map_field_type(field)},
-%       endfor
+%           endfor
 }
+%       endif
 %   endif
 </%def>\
 ##
