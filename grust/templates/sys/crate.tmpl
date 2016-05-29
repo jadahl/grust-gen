@@ -93,8 +93,7 @@ def indenter(amount):
             continue
         if node.name in self.attr.ignore_names:
             continue
-        if any(param.type == ast.TYPE_VALIST for param in node.parameters):
-            # Functions with a va_list parameter are usable only in C
+        if not mapper.node_is_mappable(node):
             continue
         functions.append(node)
 
@@ -180,12 +179,16 @@ extern {
         raise ConsistencyError(
             'C type name {} conflicts with a fundamental type'
             .format(node.ctype))
+    if not mapper.node_is_mappable(node):
+        return ''
 %>
 pub type ${node.ctype} = ${mapper.map_aliased_type(node)};
 </%def>\
 ##
 <%def name="callback(node)">
+%    if mapper.node_is_mappable(node):
 pub type ${node.ctype} = ${mapper.map_callback(node)};
+%    endif
 </%def>\
 ##
 <%def name="constant(node)">
@@ -307,11 +310,13 @@ extern {
                         type=mapper.map_parameter_type(param))
                       for param in parameters]
 %>\
+%    if mapper.node_is_mappable(node):
 pub fn ${node.symbol}(${', '.join(param_list)})\
-%   if node.retval.type != ast.TYPE_NONE:
+%       if node.retval.type != ast.TYPE_NONE:
  -> ${mapper.map_return_type(node.retval)}\
-%   endif
+%       endif
 ;
+%   endif
 </%def>\
 ##
 <%def name="cfg_attr(cfg)">\

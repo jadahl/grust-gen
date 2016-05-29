@@ -873,6 +873,26 @@ class RawMapper(object):
                 .format(field.name, typenode))
         return self._map_type(field.type, nullable=True)
 
+    def node_is_mappable(self, node):
+        if isinstance(node, ast.Type) and node == ast.TYPE_VALIST:
+            return False
+        if isinstance(node, ast.TypeContainer):
+            return self.node_is_mappable(node.type)
+        if isinstance(node, ast.Alias):
+            return self.node_is_mappable(node.target)
+        if isinstance(node, ast.Callable):
+            if any([not self.node_is_mappable(param) for param in node.parameters]):
+                return False
+            return self.node_is_mappable(node.retval)
+        if isinstance(node, ast.List) and self.crate.local_name != 'glib':
+            return self.node_is_mappable(node.element_type)
+        if isinstance(node, ast.Array):
+            return self.node_is_mappable(node.element_type)
+        if isinstance(node, ast.Type) and node.target_giname:
+            crate,name = self._lookup_giname(node.target_giname)
+            return self.node_is_mappable(crate.namespace.names[name])
+        return True
+
     def map_parameter_type(self, parameter):
         """Return the Rust FFI type syntax for a function parameter.
 
