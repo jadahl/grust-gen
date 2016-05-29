@@ -31,6 +31,8 @@ from .giscanner import utils
 from .generators.sys_crate import SysCrateWriter
 from .output import FileOutput, DirectOutput
 from . import __version__ as version
+from .mapping import sys_crate_name
+from .mapping import RawMapper
 
 def output_file(name):
     if name == '-':
@@ -53,6 +55,8 @@ def _create_arg_parser():
                         help='add directory to include search path')
     parser.add_argument('-t', '--template',
                         help='name of the custom template file')
+    parser.add_argument('-c', '--cargo', dest='gen_cargo', action='store_true',
+                        help='generate a Cargo build description')
     return parser
 
 def generator_main():
@@ -112,4 +116,24 @@ def generator_main():
         if error_count > 0:
             raise SystemExit(2)
 
+    if opts.gen_cargo:
+        if opts.template is not None:
+            sys.exit('can only generate cargo build description without custom template')
+        if not isinstance(output, FileOutput):
+            sys.exit('can only generate cargo build description with file output')
+
+        cargo_file = os.path.join(os.path.dirname(output.filename()), 'Cargo.toml')
+        cargo_template = tmpl_lookup.get_template('cargo/cargo.tmpl')
+
+        result = cargo_template.render_unicode(mapper=gen.get_mapper(),
+                                               pkgname=sys_crate_name(transformer.namespace),
+                                               version=transformer.namespace.version)
+
+        crate_output = output_file(cargo_file)
+
+        with crate_output as out:
+            try:
+                out.write(result)
+            except Exception:
+                raise SystemExit(1)
     return 0

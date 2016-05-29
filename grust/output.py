@@ -51,6 +51,9 @@ class FileOutput(object):
                 'newline': newline
             }
 
+    def filename(self):
+        return self._filename
+
     def __enter__(self):
         dirname, basename = os.path.split(self._filename)
         if sys.version_info.major >= 3:

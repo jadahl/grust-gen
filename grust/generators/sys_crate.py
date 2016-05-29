@@ -55,3 +55,6 @@ class SysCrateWriter(object):
                                context=node)
             return False
         return True
+
+    def get_mapper(self):
+        return self._mapper

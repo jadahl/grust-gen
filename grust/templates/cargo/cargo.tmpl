@@ -1,0 +1,22 @@
+[package]
+name = "${pkgname}"
+version = "0.0.1"
+
+[lib]
+path = "lib.rs"
+
+[dependencies.libc]
+git = "https://github.com/rust-lang/libc.git"
+
+[dependencies.grust]
+git = "https://github.com/gi-rust/grust.git"
+
+[dependencies.gtypes]
+git = "https://github.com/gi-rust/gtypes.git"
+
+%   for xc in mapper.extern_crates():
+%       if xc.name is not 'libc':
+[dependencies.${xc.name}]
+path = "../${xc.name}"
+%       endif
+%   endfor
