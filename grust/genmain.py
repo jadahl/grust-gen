@@ -29,6 +29,7 @@ from .giscanner.transformer import Transformer
 from .giscanner import message
 from .giscanner import utils
 from .generators.sys_crate import SysCrateWriter
+from .generators.sys_cargo import SysCargoWriter
 from .output import FileOutput, DirectOutput
 from . import __version__ as version
 from .mapping import sys_crate_name
@@ -127,19 +128,11 @@ def generator_main():
             sys.exit('can only generate cargo build description without custom template')
         if not isinstance(output, FileOutput):
             sys.exit('can only generate cargo build description with file output')
+        cargo_path = os.path.dirname(output.filename())
+        cargo_gen = SysCargoWriter(mapper=gen.get_mapper(),
+                                   transformer=transformer,
+                                   tmpl_lookup=tmpl_lookup,
+                                   path=cargo_path)
 
-        cargo_file = os.path.join(os.path.dirname(output.filename()), 'Cargo.toml')
-        cargo_template = tmpl_lookup.get_template('cargo/cargo.tmpl')
-
-        result = cargo_template.render_unicode(mapper=gen.get_mapper(),
-                                               pkgname=sys_crate_name(transformer.namespace),
-                                               version=transformer.namespace.version)
-
-        crate_output = output_file(cargo_file)
-
-        with crate_output as out:
-            try:
-                out.write(result)
-            except Exception:
-                raise SystemExit(1)
+        cargo_gen.write()
     return 0
