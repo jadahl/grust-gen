@@ -1,0 +1,13 @@
+extern crate pkg_config;
+
+const PACKAGES: &'static [ &'static str ] = &[
+%    for package in packages:
+    "${package}",
+%    endfor
+];
+
+fn main() {
+    for package in PACKAGES {
+        pkg_config::probe_library(package).unwrap();
+    }
+}

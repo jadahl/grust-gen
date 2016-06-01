@@ -1,9 +1,13 @@
 [package]
 name = "${pkgname}"
 version = "0.0.1"
+build = "build.rs"
 
 [lib]
 path = "lib.rs"
+
+[build-dependencies]
+pkg-config = "0.3.7"
 
 [dependencies.libc]
 git = "https://github.com/rust-lang/libc.git"

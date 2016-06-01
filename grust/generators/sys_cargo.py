@@ -29,7 +29,9 @@ class SysCargoWriter(object):
         self._mapper = mapper
         self._transformer = transformer
         self._cargo_template = tmpl_lookup.get_template('cargo/cargo.tmpl')
+        self._build_rs_template = tmpl_lookup.get_template('cargo/build.rs.tmpl')
         self._cargo_file = os.path.join(path, 'Cargo.toml')
+        self._build_rs_file = os.path.join(path, 'build.rs')
 
     def _write_cargo(self, output):
         pkgname = sys_crate_name(self._transformer.namespace)
@@ -39,10 +41,22 @@ class SysCargoWriter(object):
                                                      version=version)
         output.write(result)
 
+    def _write_build_rs(self, output):
+        pkgconfig_packages = self._transformer.namespace.exported_packages
+        result = self._build_rs_template.render_unicode(packages=pkgconfig_packages)
+        output.write(result)
+
     def write(self):
         cargo_output = FileOutput(self._cargo_file, encoding='utf-8')
         with cargo_output as output:
             try:
                 self._write_cargo(output)
+            except Exception:
+                raise SystemExit(1)
+
+        build_rs_output = FileOutput(self._build_rs_file, encoding='utf-8')
+        with build_rs_output as output:
+            try:
+                self._write_build_rs(output)
             except Exception:
                 raise SystemExit(1)
