@@ -15,7 +15,7 @@ git = "https://github.com/gi-rust/grust.git"
 git = "https://github.com/gi-rust/gtypes.git"
 
 %   for xc in mapper.extern_crates():
-%       if xc.name is not 'libc':
+%       if xc.name is not 'libc' and not mapper.is_excluded(xc):
 [dependencies.${xc.name}]
 path = "../${xc.name}"
 %       endif

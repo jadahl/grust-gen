@@ -117,7 +117,7 @@ extern crate gtypes;
 %   for xc in mapper.extern_crates():
 %       if xc.name == xc.local_name:
 extern crate ${xc.name};
-%       else:
+%       elif not mapper.is_excluded(xc):
 extern crate ${xc.name} as ${xc.local_name};
 %       endif
 %   endfor

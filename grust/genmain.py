@@ -57,6 +57,12 @@ def _create_arg_parser():
                         help='name of the custom template file')
     parser.add_argument('-c', '--cargo', dest='gen_cargo', action='store_true',
                         help='generate a Cargo build description')
+    parser.add_argument('--exclude', action='append',
+                        dest='excluded_crates', metavar='DEP',
+                        help='exclude mapping functions relating to this crate')
+    parser.add_argument('--include', action='append',
+                        dest='included_crates', metavar='DEP',
+                        help='include mapping functions relating to this crate')
     return parser
 
 def generator_main():

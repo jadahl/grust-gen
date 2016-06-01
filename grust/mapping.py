@@ -515,11 +515,21 @@ class RawMapper(object):
     names resolved in the Rust code generated using the mapping methods.
     """
 
-    def __init__(self, transformer):
+    def __init__(self, transformer, options):
         self.transformer = transformer
         self.crate = self._create_crate(transformer.namespace)
         self._extern_crates = {}  # namespace name -> Crate
         self._crate_libc = None
+        self._excluded_crates = options.excluded_crates
+        self._included_crates = options.included_crates
+
+    def is_excluded(self, crate):
+        if not self._included_crates and not self._excluded_crates:
+            return False
+        if not self._included_crates:
+            return crate.local_name in self._excluded_crates
+        else:
+            return not crate.local_name in self._included_crates
 
     def _create_crate(self, namespace):
         # This is a method, to allow per-namespace configuration
@@ -903,15 +913,28 @@ class RawMapper(object):
     def node_is_mappable(self, node):
         if isinstance(node, ast.Type) and node == ast.TYPE_VALIST:
             return False
+        if isinstance(node, ast.Type) and node.target_giname:
+            crate,name = self._lookup_giname(node.target_giname)
+            if self.is_excluded(crate):
+                return False
         if isinstance(node, ast.TypeContainer):
             return self.node_is_mappable(node.type)
         if isinstance(node, ast.Alias):
             return self.node_is_mappable(node.target)
         if isinstance(node, ast.Callable):
+            # Throwing maps to GError, which is in the glib crate
+            if self.crate.local_name != 'glib' and node.throws:
+                glib_crate = self._extern_crates.get('GLib')
+                if self.is_excluded(glib_crate):
+                    return False
             if any([not self.node_is_mappable(param) for param in node.parameters]):
                 return False
             return self.node_is_mappable(node.retval)
         if isinstance(node, ast.List) and self.crate.local_name != 'glib':
+            # Lists are always GList or GSList, which are in the glib crate
+            glib_crate = self._extern_crates.get('GLib')
+            if self.is_excluded(glib_crate):
+                return False
             return self.node_is_mappable(node.element_type)
         if isinstance(node, ast.Array):
             return self.node_is_mappable(node.element_type)

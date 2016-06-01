@@ -29,7 +29,7 @@ class SysCrateWriter(object):
                  template,
                  options,
                  gir_filename=None):
-        self._mapper = RawMapper(transformer)
+        self._mapper = RawMapper(transformer, options)
         self._template = template
         self._options = options
         if gir_filename:
